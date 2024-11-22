@@ -1,13 +1,18 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
 public class Counter : MonoBehaviour
 {
     [SerializeField] private ButtonText _buttonText;
-    [SerializeField] private SecondsText _secondsText;
+    [SerializeField] private CounterView _counterView;
 
-    private float _elapsedTime = 0f;
-    private float _delayInSeconds = 1f;
+    public event Action<bool> OnCountingIsActive;
+    public event Action<float> OnValueChanged;
+
+    private int _counterDelta = 1;
+    private int _value = 0;
+    private float _delayInSeconds = 0.5f;
     private bool _isCounting = false;
 
     private Coroutine _coroutine;
@@ -24,20 +29,11 @@ public class Counter : MonoBehaviour
         }
     }
 
-    private void Start()
-    {
-        if (_buttonText == null)
-            _buttonText = GetComponent<ButtonText>();
-
-        if (_secondsText == null)
-            _secondsText = GetComponent<SecondsText>();
-    }
-
     private void StartCounting()
     {
         _isCounting = true;
         _coroutine = StartCoroutine(Count());
-        _buttonText.UpdateText(_isCounting);
+        OnCountingIsActive?.Invoke(_isCounting);
     }
 
     private void StopCounting()
@@ -50,7 +46,7 @@ public class Counter : MonoBehaviour
             _coroutine = null;
         }
 
-        _buttonText.UpdateText(_isCounting);
+        OnCountingIsActive?.Invoke(_isCounting);
     }
 
     private IEnumerator Count()
@@ -59,8 +55,8 @@ public class Counter : MonoBehaviour
 
         while (_isCounting)
         {
-            _secondsText.Display(_elapsedTime);
-            _elapsedTime += _delayInSeconds;
+            OnValueChanged?.Invoke(_value);
+            _value +=  _counterDelta;
 
             yield return wait;
         }
